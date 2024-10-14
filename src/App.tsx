@@ -10,27 +10,48 @@ function App() {
   const [quantity, setQuantity] = useState(1);
   const [expMonth, setExpMonth] = useState('');
   const [expYear, setExpYear] = useState('');
+  const [useRandom, setUseRandom] = useState(false);
 
   useEffect(() => {
     initGA();
     logPageView();
   }, []);
 
+  const validateInput = () => {
+    if (!bins) return false;
+    if (quantity < 1) return false;
+    if (!useRandom) {
+      if (!expMonth || !expYear) return false;
+      if (expMonth < 1 || expMonth > 12) return false;
+      if (expYear < new Date().getFullYear()) return false;
+    }
+    return true;
+  };
+
   const generateCardDetails = () => {
+    if (!validateInput()) {
+      alert('Invalid input. Please check your entries.');
+      return;
+    }
+
     const binsArray = bins.split(',').map(bin => bin.trim());
     const cards = binsArray.flatMap(bin => (
       Array.from({ length: quantity }, () => ({
         number: generateCardNumber(bin, 16),
-        expiry: `${expMonth}/${expYear}`,
+        expiry: useRandom ? generateExpiryDate() : `${expMonth}/${expYear}`,
         cvv: generateCVV(),
       }))
     ));
     setCardDetails(cards);
   };
 
-  const copyToClipboard = (card) => {
-    const text = `${card.number}|${card.expiry}|${card.cvv}`;
+  const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const copyAllToClipboard = () => {
+    const allCards = cardDetails.map(card => `${card.number}|${card.expiry}|${card.cvv}`).join('\n');
+    copyToClipboard(allCards);
   };
 
   return (
@@ -65,20 +86,33 @@ function App() {
               placeholder="Quantity"
               className="border p-2 rounded mb-2"
             />
-            <input
-              type="text"
-              value={expMonth}
-              onChange={(e) => setExpMonth(e.target.value)}
-              placeholder="Expiration Month (MM)"
-              className="border p-2 rounded mb-2"
-            />
-            <input
-              type="text"
-              value={expYear}
-              onChange={(e) => setExpYear(e.target.value)}
-              placeholder="Expiration Year (YYYY)"
-              className="border p-2 rounded mb-2"
-            />
+            <label className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={useRandom}
+                onChange={(e) => setUseRandom(e.target.checked)}
+                className="mr-2"
+              />
+              Use Random Expiry Date
+            </label>
+            {!useRandom && (
+              <>
+                <input
+                  type="text"
+                  value={expMonth}
+                  onChange={(e) => setExpMonth(e.target.value)}
+                  placeholder="Expiration Month (MM)"
+                  className="border p-2 rounded mb-2"
+                />
+                <input
+                  type="text"
+                  value={expYear}
+                  onChange={(e) => setExpYear(e.target.value)}
+                  placeholder="Expiration Year (YYYY)"
+                  className="border p-2 rounded mb-2"
+                />
+              </>
+            )}
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded"
               onClick={generateCardDetails}
@@ -94,12 +128,20 @@ function App() {
                 </div>
                 <button
                   className="bg-green-500 text-white px-2 py-1 rounded"
-                  onClick={() => copyToClipboard(card)}
+                  onClick={() => copyToClipboard(`${card.number}|${card.expiry}|${card.cvv}`)}
                 >
                   Copy
                 </button>
               </div>
             ))}
+            {cardDetails.length > 0 && (
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded mt-5"
+                onClick={copyAllToClipboard}
+              >
+                Copy All
+              </button>
+            )}
           </div>
         </section>
         <section id="about" className="flex flex-col items-center mb-10">
