@@ -17,6 +17,11 @@ function App() {
     setCardDetails(cards);
   };
 
+  const copyToClipboard = (card) => {
+    const text = `${card.number}|${card.expiry}|${card.cvv}`;
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-5">
       <h1 className="text-3xl font-bold mb-5">Credit Card Generator</h1>
@@ -44,10 +49,16 @@ function App() {
       </div>
       <div className="w-full max-w-md bg-white p-3 rounded shadow">
         {cardDetails.map((card, index) => (
-          <div key={index} className="mb-2">
-            <p>Card Number: {card.number}</p>
-            <p>Expiry Date: {card.expiry}</p>
-            <p>CVV: {card.cvv}</p>
+          <div key={index} className="mb-2 flex justify-between items-center">
+            <div>
+              <p>{`${card.number}|${card.expiry}|${card.cvv}`}</p>
+            </div>
+            <button
+              className="bg-green-500 text-white px-2 py-1 rounded"
+              onClick={() => copyToClipboard(card)}
+            >
+              Copy
+            </button>
           </div>
         ))}
       </div>
