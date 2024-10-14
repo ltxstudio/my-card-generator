@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { initGA, logPageView } from './analytics';
 import { generateCardNumber } from './luhn';
-import { generateCVV, validateCardDetails } from './generateDetails';
+import { generateCVV, generateExpiryDate, validateCardDetails } from './generateDetails';
 
 function App() {
   const [cardDetails, setCardDetails] = useState([]);
