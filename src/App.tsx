@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { initGA, logPageView } from './analytics';
 import { generateCardNumber } from './luhn';
-import { generateCVV } from './generateDetails';
+import { generateCVV, validateCardDetails } from './generateDetails';
 
 function App() {
   const [cardDetails, setCardDetails] = useState([]);
@@ -10,48 +10,39 @@ function App() {
   const [quantity, setQuantity] = useState(1);
   const [expMonth, setExpMonth] = useState('');
   const [expYear, setExpYear] = useState('');
-  const [useRandom, setUseRandom] = useState(false);
+  const [cvv, setCvv] = useState('');
+  const [useRandom, setUseRandom] = useState(true);
 
   useEffect(() => {
     initGA();
     logPageView();
   }, []);
 
-  const validateInput = () => {
-    if (!bins) return false;
-    if (quantity < 1) return false;
-    if (!useRandom) {
-      if (!expMonth || !expYear) return false;
-      if (expMonth < 1 || expMonth > 12) return false;
-      if (expYear < new Date().getFullYear()) return false;
-    }
-    return true;
-  };
-
   const generateCardDetails = () => {
-    if (!validateInput()) {
-      alert('Invalid input. Please check your entries.');
-      return;
-    }
-
     const binsArray = bins.split(',').map(bin => bin.trim());
     const cards = binsArray.flatMap(bin => (
-      Array.from({ length: quantity }, () => ({
-        number: generateCardNumber(bin, 16),
-        expiry: useRandom ? generateExpiryDate() : `${expMonth}/${expYear}`,
-        cvv: generateCVV(),
-      }))
+      Array.from({ length: quantity }, () => {
+        const number = generateCardNumber(bin, 16);
+        const expiry = useRandom ? generateExpiryDate() : `${expMonth}/${expYear}`;
+        const cvvCode = useRandom ? generateCVV() : cvv;
+        if (validateCardDetails(number, expiry, cvvCode)) {
+          return { number, expiry, cvv: cvvCode };
+        } else {
+          return null;
+        }
+      }).filter(Boolean)
     ));
     setCardDetails(cards);
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (card) => {
+    const text = `${card.number}|${card.expiry}|${card.cvv}`;
     navigator.clipboard.writeText(text);
   };
 
   const copyAllToClipboard = () => {
-    const allCards = cardDetails.map(card => `${card.number}|${card.expiry}|${card.cvv}`).join('\n');
-    copyToClipboard(allCards);
+    const text = cardDetails.map(card => `${card.number}|${card.expiry}|${card.cvv}`).join('\n');
+    navigator.clipboard.writeText(text);
   };
 
   return (
@@ -86,38 +77,50 @@ function App() {
               placeholder="Quantity"
               className="border p-2 rounded mb-2"
             />
-            <label className="flex items-center mb-2">
+            <input
+              type="text"
+              value={expMonth}
+              onChange={(e) => setExpMonth(e.target.value)}
+              placeholder="Expiration Month (MM)"
+              className="border p-2 rounded mb-2"
+              disabled={useRandom}
+            />
+            <input
+              type="text"
+              value={expYear}
+              onChange={(e) => setExpYear(e.target.value)}
+              placeholder="Expiration Year (YYYY)"
+              className="border p-2 rounded mb-2"
+              disabled={useRandom}
+            />
+            <input
+              type="text"
+              value={cvv}
+              onChange={(e) => setCvv(e.target.value)}
+              placeholder="CVV"
+              className="border p-2 rounded mb-2"
+              disabled={useRandom}
+            />
+            <label className="flex items-center mb-5">
               <input
                 type="checkbox"
                 checked={useRandom}
                 onChange={(e) => setUseRandom(e.target.checked)}
                 className="mr-2"
               />
-              Use Random Expiry Date
+              Use Random Expiry and CVV
             </label>
-            {!useRandom && (
-              <>
-                <input
-                  type="text"
-                  value={expMonth}
-                  onChange={(e) => setExpMonth(e.target.value)}
-                  placeholder="Expiration Month (MM)"
-                  className="border p-2 rounded mb-2"
-                />
-                <input
-                  type="text"
-                  value={expYear}
-                  onChange={(e) => setExpYear(e.target.value)}
-                  placeholder="Expiration Year (YYYY)"
-                  className="border p-2 rounded mb-2"
-                />
-              </>
-            )}
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded"
               onClick={generateCardDetails}
             >
               Generate
+            </button>
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded mt-2"
+              onClick={copyAllToClipboard}
+            >
+              Copy All
             </button>
           </div>
           <div className="w-full max-w-md bg-white p-3 rounded shadow">
@@ -128,20 +131,12 @@ function App() {
                 </div>
                 <button
                   className="bg-green-500 text-white px-2 py-1 rounded"
-                  onClick={() => copyToClipboard(`${card.number}|${card.expiry}|${card.cvv}`)}
+                  onClick={() => copyToClipboard(card)}
                 >
                   Copy
                 </button>
               </div>
             ))}
-            {cardDetails.length > 0 && (
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded mt-5"
-                onClick={copyAllToClipboard}
-              >
-                Copy All
-              </button>
-            )}
           </div>
         </section>
         <section id="about" className="flex flex-col items-center mb-10">
@@ -159,13 +154,13 @@ function App() {
             2. Specify the quantity of credit card numbers you want to generate.
           </p>
           <p className="max-w-prose text-center mb-2">
-            3. Enter the expiration month (MM) and year (YYYY).
+            3. Enter the expiration month (MM) and year (YYYY), or use random values.
           </p>
           <p className="max-w-prose text-center mb-2">
             4. Click the "Generate" button to produce the card numbers.
           </p>
           <p className="max-w-prose text-center">
-            5. Copy the generated card details by clicking the "Copy" button next to each card.
+            5. Copy the generated card details by clicking the "Copy" button next to each card or "Copy All" to copy all at once.
           </p>
         </section>
         <section id="faq" className="flex flex-col items-center">
