@@ -1,22 +1,30 @@
 import React, { useState } from 'react';
-import NamsoCcGen from 'namso-cc-gen';
-import './App.css';
+import { generate } from 'namso-cc-gen';
 
 function App() {
-  const [cardNumber, setCardNumber] = useState('');
+  const [cardNumbers, setCardNumbers] = useState([]);
 
-  const generateCardNumber = () => {
-    const generatedNumber = NamsoCcGen.generate();
-    setCardNumber(generatedNumber);
+  const generateCardNumbers = () => {
+    const cards = generate('4716', 16, 10); // Visa starts with 4716, 16 digits, 10 cards
+    setCardNumbers(cards);
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold text-center mb-4">Credit Card Number Generator</h1>
-      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={generateCardNumber}>
-        Generate Card Number
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-5">Credit Card Generator</h1>
+      <button
+        className="bg-blue-500 text-white px-4 py-2 rounded mb-5"
+        onClick={generateCardNumbers}
+      >
+        Generate
       </button>
-      <p className="text-lg mt-4">{cardNumber}</p>
+      <ul className="space-y-2">
+        {cardNumbers.map((card, index) => (
+          <li key={index} className="bg-white p-3 rounded shadow">
+            {card}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
