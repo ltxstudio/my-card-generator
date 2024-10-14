@@ -1,8 +1,7 @@
-// src/analytics.js
 import ReactGA from 'react-ga';
 
 export const initGA = () => {
-  ReactGA.initialize('YOUR_GOOGLE_ANALYTICS_TRACKING_ID');
+  ReactGA.initialize('G-8DVL6S5VM9');
 };
 
 export const logPageView = () => {
