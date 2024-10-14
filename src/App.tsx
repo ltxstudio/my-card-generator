@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { generate } from 'namso-cc-gen';
-
+const namso = require('namso-cc-gen');
 function App() {
   const [cardNumbers, setCardNumbers] = useState([]);
 
